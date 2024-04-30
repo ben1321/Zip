@@ -46,7 +46,7 @@ internal class ZipUtilities {
         }
     }
     
-    //MARK: Path processing
+    // MARK: Path processing
     
     /**
     Process zip paths
@@ -55,7 +55,7 @@ internal class ZipUtilities {
     
     - returns: Array of ProcessedFilePath structs.
     */
-    internal func processZipPaths(_ paths: [URL]) -> [ProcessedFilePath]{
+    internal func processZipPaths(_ paths: [URL]) -> [ProcessedFilePath] {
         var processedFilePaths = [ProcessedFilePath]()
         for path in paths {
             let filePath = path.path
@@ -64,15 +64,13 @@ internal class ZipUtilities {
             if !isDirectory.boolValue {
                 let processedPath = ProcessedFilePath(filePathURL: path, fileName: path.lastPathComponent)
                 processedFilePaths.append(processedPath)
-            }
-            else {
+            } else {
                 let directoryContents = expandDirectoryFilePath(path)
                 processedFilePaths.append(contentsOf: directoryContents)
             }
         }
         return processedFilePaths
     }
-    
     
     /**
      Expand directory contents and parse them into ProcessedFilePath structs.

@@ -25,7 +25,7 @@ extension Zip {
         return searchPathDirectory
     }
     
-    //MARK: Quick Unzip
+    // MARK: Quick Unzip
     
     /**
      Quick unzip a file. Unzips to a new folder inside the app's documents folder with the zip file's name.
@@ -52,7 +52,7 @@ extension Zip {
      
      - returns: NSURL of the destination folder.
      */
-    public class func quickUnzipFile(_ path: URL, progress: ((_ progress: Double) -> ())?) throws -> URL {
+    public class func quickUnzipFile(_ path: URL, progress: ((_ progress: Double) -> Void)?) throws -> URL {
         let fileManager = FileManager.default
 
         let fileExtension = path.pathExtension
@@ -69,14 +69,14 @@ extension Zip {
         #endif
         do {
             let destinationUrl = documentsUrl.appendingPathComponent(directoryName, isDirectory: true)
-            try self.unzipFile(path, destination: destinationUrl, overwrite: true, password: nil, progress: progress)
+            try self.unzipFile(path, destination: destinationUrl, overwrite: true, password: nil, progressTracker: Progress())
             return destinationUrl
-        }catch{
+        } catch {
             throw(ZipError.unzipFail)
         }
     }
     
-    //MARK: Quick Zip
+    // MARK: Quick Zip
     
     /**
      Quick zip files.
@@ -107,7 +107,7 @@ extension Zip {
      
      - returns: NSURL of the destination folder.
      */
-    public class func quickZipFiles(_ paths: [URL], fileName: String, progress: ((_ progress: Double) -> ())?) throws -> URL {
+    public class func quickZipFiles(_ paths: [URL], fileName: String, progress: ((_ progress: Double) -> Void)?) throws -> URL {
         let fileManager = FileManager.default
         #if os(Linux)
         // urls(for:in:) is not yet implemented on Linux
@@ -120,6 +120,5 @@ extension Zip {
         try self.zipFiles(paths: paths, zipFilePath: destinationUrl, password: nil, progress: progress)
         return destinationUrl
     }
-    
     
 }

@@ -17,6 +17,8 @@ public enum ZipError: Error {
     case unzipFail
     /// Zip fail
     case zipFail
+    ///cancelled
+    case cancelled
     
     /// User readable description
     public var description: String {
@@ -24,6 +26,7 @@ public enum ZipError: Error {
         case .fileNotFound: return NSLocalizedString("File not found.", comment: "")
         case .unzipFail: return NSLocalizedString("Failed to unzip file.", comment: "")
         case .zipFail: return NSLocalizedString("Failed to zip file.", comment: "")
+        case .cancelled: return NSLocalizedString("User cancelled.", comment: "")
         }
     }
 }
@@ -96,7 +99,7 @@ public class Zip {
      - notes: Supports implicit progress composition
      */
     
-    public class func unzipFile(_ zipFilePath: URL, destination: URL, overwrite: Bool, password: String?, progress: ((_ progress: Double) -> ())? = nil, fileOutputHandler: ((_ unzippedFile: URL) -> Void)? = nil) throws {
+    public class func unzipFile(_ zipFilePath: URL, destination: URL, overwrite: Bool, password: String?, progressTracker: Progress, fileOutputHandler: ((_ unzippedFile: URL) -> Void)? = nil) throws {
         
         // File manager
         let fileManager = FileManager.default
@@ -122,8 +125,9 @@ public class Zip {
             totalSize += attributeFileSize
         }
         
-        let progressTracker = Progress(totalUnitCount: Int64(totalSize))
-        progressTracker.isCancellable = false
+//        let progressTracker = Progress(totalUnitCount: )
+        progressTracker.totalUnitCount = Int64(totalSize)
+        progressTracker.isCancellable = true
         progressTracker.isPausable = false
         progressTracker.kind = ProgressKind.file
         
@@ -176,12 +180,7 @@ public class Zip {
                 pathString = pathString.replacingOccurrences(of: "\\", with: "/")
             }
 
-            let fullPath = destination.appendingPathComponent(pathString).standardized.path
-            // .standardized removes any ".. to move a level up".
-            // If we then check that the fullPath starts with the destination directory we know we are not extracting "outside" te destination.
-            guard fullPath.starts(with: destination.standardized.path) else {
-                throw ZipError.unzipFail
-            }
+            let fullPath = destination.appendingPathComponent(pathString).path
 
             let creationDate = Date()
 
@@ -252,8 +251,11 @@ public class Zip {
             ret = unzGoToNextFile(zip)
             
             // Update progress handler
-            if let progressHandler = progress{
-                progressHandler((currentPosition/totalSize))
+//            if let progressHandler = progress{
+//                progressHandler((currentPosition/totalSize))
+//            }
+            guard !progressTracker.isCancelled else {
+                throw ZipError.cancelled
             }
             
             if let fileHandler = fileOutputHandler,
@@ -264,12 +266,12 @@ public class Zip {
             
             progressTracker.completedUnitCount = Int64(currentPosition)
             
-        } while (ret == UNZ_OK && ret != UNZ_END_OF_LIST_OF_FILE)
+        } while (ret == UNZ_OK && ret != UNZ_END_OF_LIST_OF_FILE) && !progressTracker.isCancelled
         
         // Completed. Update progress handler.
-        if let progressHandler = progress{
-            progressHandler(1.0)
-        }
+//        if let progressHandler = progress{
+//            progressHandler(1.0)
+//        }
         
         progressTracker.completedUnitCount = Int64(totalSize)
         
